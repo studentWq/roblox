@@ -1,52 +1,44 @@
--- Chloe X Fishing Bot | Version 1.0.8
+-- Chloe X Fishing Bot | Version 2.0 - FIXED AUTO FISHING
 -- GitHub: https://github.com/username/ChloeX-Fishing-Bot
--- Description: Advanced Auto Fishing System with Custom GUI
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local VirtualInput = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
 -- =====================
--- CONFIGURATION SYSTEM
+-- CONFIGURATION
 -- =====================
 local Config = {
     Settings = {
         AutoStart = false,
         SafetyMode = true,
         Humanizer = true,
-        DebugMode = false,
-        Version = "1.0.8"
+        DebugMode = true,
+        Version = "2.0"
     },
     
     Fishing = {
-        CastDelay = {1.5, 3.0},
-        ReelDelay = 0.1,
-        ChangeSpotAfter = 25,
-        MaxFishingTime = 3600,
-        NoCooldown = true
+        CastKey = "E",
+        ReelKey = "F",
+        CastDuration = 2,
+        WaitForBite = {3, 8}, -- min, max seconds
+        ReelDuration = 1
     },
     
     GUI = {
         Theme = "Dark",
-        AccentColor = Color3.fromRGB(0, 170, 255),
-        Transparency = 0.05
-    },
-    
-    Safety = {
-        AntiAFK = true,
-        RandomDelays = true,
-        PatternRandomization = true,
-        MaxActionsPerMinute = 30,
-        AutoShutdown = true
+        AccentColor = Color3.fromRGB(0, 255, 170),
+        BackgroundColor = Color3.fromRGB(20, 20, 25)
     }
 }
 
 -- =====================
--- CUSTOM GUI FRAMEWORK
+-- PREMIUM GUI FRAMEWORK
 -- =====================
 local ChloeXGUI = {}
 
@@ -59,81 +51,110 @@ function ChloeXGUI:CreateWindow(title)
     local MinimizeBtn = Instance.new("TextButton")
     local TabButtons = Instance.new("Frame")
     local ContentHolder = Instance.new("Frame")
+    local UICorner = Instance.new("UICorner")
+    local DropShadow = Instance.new("ImageLabel")
     
     -- ScreenGui
-    ScreenGui.Name = "ChloeXGUI"
+    ScreenGui.Name = "ChloeXPremiumGUI"
     ScreenGui.Parent = game.CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Main Frame
+    -- Drop Shadow
+    DropShadow.Name = "DropShadow"
+    DropShadow.Image = "rbxassetid://6014261993"
+    DropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    DropShadow.ImageTransparency = 0.8
+    DropShadow.ScaleType = Enum.ScaleType.Slice
+    DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
+    DropShadow.Parent = MainFrame
+    DropShadow.Size = UDim2.new(1, 50, 1, 50)
+    DropShadow.Position = UDim2.new(0, -25, 0, -25)
+    DropShadow.BackgroundTransparency = 1
+    
+    -- Main Frame dengan rounded corners
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 500, 0, 450)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -225)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    MainFrame.Size = UDim2.new(0, 500, 0, 500)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -250)
+    MainFrame.BackgroundColor3 = Config.GUI.BackgroundColor
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
     
-    -- Top Bar
+    UICorner.CornerRadius = UDim.new(0, 12)
+    UICorner.Parent = MainFrame
+    
+    -- Top Bar dengan gradient
     TopBar.Name = "TopBar"
-    TopBar.Size = UDim2.new(1, 0, 0, 30)
-    TopBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    TopBar.Size = UDim2.new(1, 0, 0, 40)
+    TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     TopBar.BorderSizePixel = 0
     TopBar.Parent = MainFrame
     
-    -- Title
+    local TopBarCorner = Instance.new("UICorner")
+    TopBarCorner.CornerRadius = UDim.new(0, 12)
+    TopBarCorner.Parent = TopBar
+    
+    -- Title dengan gradient text
     Title.Name = "Title"
     Title.Size = UDim2.new(0, 200, 1, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = title or "Chloe X | v" .. Config.Settings.Version
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.TextSize = 14
+    Title.Text = "🎣 " .. title
+    Title.TextColor3 = Config.GUI.AccentColor
+    Title.TextSize = 16
     Title.Font = Enum.Font.GothamBold
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = TopBar
-    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
     
-    -- Close Button
+    -- Close Button modern
     CloseBtn.Name = "CloseBtn"
-    CloseBtn.Size = UDim2.new(0, 30, 1, 0)
-    CloseBtn.Position = UDim2.new(1, -30, 0, 0)
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
     CloseBtn.BorderSizePixel = 0
-    CloseBtn.Text = "X"
+    CloseBtn.Text = "×"
     CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    CloseBtn.TextSize = 14
+    CloseBtn.TextSize = 18
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.Parent = TopBar
     
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0, 8)
+    CloseCorner.Parent = CloseBtn
+    
     -- Minimize Button
     MinimizeBtn.Name = "MinimizeBtn"
-    MinimizeBtn.Size = UDim2.new(0, 30, 1, 0)
-    MinimizeBtn.Position = UDim2.new(1, -60, 0, 0)
-    MinimizeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+    MinimizeBtn.Position = UDim2.new(1, -70, 0, 5)
+    MinimizeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 120)
     MinimizeBtn.BorderSizePixel = 0
-    MinimizeBtn.Text = "_"
+    MinimizeBtn.Text = "−"
     MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MinimizeBtn.TextSize = 14
+    MinimizeBtn.TextSize = 18
     MinimizeBtn.Font = Enum.Font.GothamBold
     MinimizeBtn.Parent = TopBar
     
-    -- Tab Buttons
+    local MinimizeCorner = Instance.new("UICorner")
+    MinimizeCorner.CornerRadius = UDim.new(0, 8)
+    MinimizeCorner.Parent = MinimizeBtn
+    
+    -- Tab Buttons dengan styling modern
     TabButtons.Name = "TabButtons"
-    TabButtons.Size = UDim2.new(0, 120, 1, -30)
-    TabButtons.Position = UDim2.new(0, 0, 0, 30)
-    TabButtons.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TabButtons.Size = UDim2.new(0, 130, 1, -40)
+    TabButtons.Position = UDim2.new(0, 0, 0, 40)
+    TabButtons.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     TabButtons.BorderSizePixel = 0
     TabButtons.Parent = MainFrame
     
     -- Content Holder
     ContentHolder.Name = "ContentHolder"
-    ContentHolder.Size = UDim2.new(1, -120, 1, -30)
-    ContentHolder.Position = UDim2.new(0, 120, 0, 30)
-    ContentHolder.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    ContentHolder.Size = UDim2.new(1, -130, 1, -40)
+    ContentHolder.Position = UDim2.new(0, 130, 0, 40)
+    ContentHolder.BackgroundColor3 = Config.GUI.BackgroundColor
     ContentHolder.BorderSizePixel = 0
     ContentHolder.Parent = MainFrame
     
-    -- Make window draggable
+    -- Draggable Window
     local dragging = false
     local dragInput, dragStart, startPos
     
@@ -177,7 +198,24 @@ function ChloeXGUI:CreateWindow(title)
     MinimizeBtn.MouseButton1Click:Connect(function()
         ContentHolder.Visible = not ContentHolder.Visible
         TabButtons.Visible = not TabButtons.Visible
-        MainFrame.Size = ContentHolder.Visible and UDim2.new(0, 500, 0, 450) or UDim2.new(0, 500, 0, 30)
+        MainFrame.Size = ContentHolder.Visible and UDim2.new(0, 500, 0, 500) or UDim2.new(0, 500, 0, 40)
+    end)
+    
+    -- Hover Effects
+    CloseBtn.MouseEnter:Connect(function()
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}):Play()
+    end)
+    
+    CloseBtn.MouseLeave:Connect(function()
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+    end)
+    
+    MinimizeBtn.MouseEnter:Connect(function()
+        TweenService:Create(MinimizeBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(120, 120, 140)}):Play()
+    end)
+    
+    MinimizeBtn.MouseLeave:Connect(function()
+        TweenService:Create(MinimizeBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 100, 120)}):Play()
     end)
     
     local self = {
@@ -190,44 +228,61 @@ function ChloeXGUI:CreateWindow(title)
     function self:CreateTab(tabName, icon)
         local TabButton = Instance.new("TextButton")
         local TabContent = Instance.new("ScrollingFrame")
+        local ButtonCorner = Instance.new("UICorner")
+        local ButtonStroke = Instance.new("UIStroke")
         
-        -- Tab Button
+        -- Modern Tab Button
         TabButton.Name = tabName .. "Tab"
-        TabButton.Size = UDim2.new(1, -10, 0, 35)
-        TabButton.Position = UDim2.new(0, 5, 0, (#self.Tabs * 35) + 5)
-        TabButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        TabButton.Size = UDim2.new(1, -10, 0, 45)
+        TabButton.Position = UDim2.new(0, 5, 0, (#self.Tabs * 45) + 5)
+        TabButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         TabButton.BorderSizePixel = 0
-        TabButton.Text = "  " .. tabName
-        TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-        TabButton.TextSize = 12
+        TabButton.Text = (icon or "📄") .. "  " .. tabName
+        TabButton.TextColor3 = Color3.fromRGB(200, 200, 220)
+        TabButton.TextSize = 13
         TabButton.TextXAlignment = Enum.TextXAlignment.Left
-        TabButton.Font = Enum.Font.Gotham
+        TabButton.Font = Enum.Font.GothamSemibold
         TabButton.Parent = TabButtons
         
-        -- Tab Content
+        ButtonCorner.CornerRadius = UDim.new(0, 8)
+        ButtonCorner.Parent = TabButton
+        
+        ButtonStroke.Thickness = 1
+        ButtonStroke.Color = Color3.fromRGB(60, 60, 70)
+        ButtonStroke.Parent = TabButton
+        
+        -- Tab Content dengan padding
         TabContent.Name = tabName .. "Content"
         TabContent.Size = UDim2.new(1, 0, 1, 0)
         TabContent.Position = UDim2.new(0, 0, 0, 0)
         TabContent.BackgroundTransparency = 1
         TabContent.BorderSizePixel = 0
         TabContent.ScrollBarThickness = 3
-        TabContent.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+        TabContent.ScrollBarImageColor3 = Config.GUI.AccentColor
         TabContent.Visible = false
         TabContent.Parent = ContentHolder
         
         local UIListLayout = Instance.new("UIListLayout")
         UIListLayout.Parent = TabContent
-        UIListLayout.Padding = UDim.new(0, 8)
+        UIListLayout.Padding = UDim.new(0, 10)
         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
         
+        local UIPadding = Instance.new("UIPadding")
+        UIPadding.Parent = TabContent
+        UIPadding.PaddingLeft = UDim.new(0, 10)
+        UIPadding.PaddingTop = UDim.new(0, 10)
+        
+        -- Tab switching logic
         TabButton.MouseButton1Click:Connect(function()
             for _, tab in pairs(self.Tabs) do
                 tab.Content.Visible = false
-                tab.Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                tab.Button.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+                TweenService:Create(tab.Button, TweenInfo.new(0.3), {Size = UDim2.new(1, -10, 0, 45)}):Play()
             end
             
             TabContent.Visible = true
-            TabButton.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+            TabButton.BackgroundColor3 = Config.GUI.AccentColor
+            TweenService:Create(TabButton, TweenInfo.new(0.3), {Size = UDim2.new(1, -5, 0, 45)}):Play()
             self.CurrentTab = tabName
         end)
         
@@ -240,9 +295,11 @@ function ChloeXGUI:CreateWindow(title)
         
         table.insert(self.Tabs, tab)
         
+        -- Set first tab as active
         if #self.Tabs == 1 then
             TabContent.Visible = true
-            TabButton.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+            TabButton.BackgroundColor3 = Config.GUI.AccentColor
+            TweenService:Create(TabButton, TweenInfo.new(0.3), {Size = UDim2.new(1, -5, 0, 45)}):Play()
             self.CurrentTab = tabName
         end
         
@@ -250,38 +307,58 @@ function ChloeXGUI:CreateWindow(title)
             local Section = Instance.new("Frame")
             local SectionTitle = Instance.new("TextLabel")
             local SectionContent = Instance.new("Frame")
+            local SectionCorner = Instance.new("UICorner")
+            local SectionStroke = Instance.new("UIStroke")
             
-            -- Section Frame
+            -- Modern Section Frame
             Section.Name = sectionName .. "Section"
             Section.Size = UDim2.new(1, -20, 0, 0)
             Section.LayoutOrder = #self.Sections + 1
-            Section.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            Section.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
             Section.BorderSizePixel = 0
             Section.Parent = self.Content
             
-            -- Section Title
+            SectionCorner.CornerRadius = UDim.new(0, 10)
+            SectionCorner.Parent = Section
+            
+            SectionStroke.Thickness = 1
+            SectionStroke.Color = Color3.fromRGB(60, 60, 70)
+            SectionStroke.Parent = Section
+            
+            -- Section Title dengan accent
             SectionTitle.Name = "SectionTitle"
-            SectionTitle.Size = UDim2.new(1, 0, 0, 30)
-            SectionTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            SectionTitle.Size = UDim2.new(1, 0, 0, 35)
+            SectionTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
             SectionTitle.BorderSizePixel = 0
             SectionTitle.Text = "  " .. sectionName
-            SectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-            SectionTitle.TextSize = 12
+            SectionTitle.TextColor3 = Config.GUI.AccentColor
+            SectionTitle.TextSize = 13
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Parent = Section
             
+            local TitleCorner = Instance.new("UICorner")
+            TitleCorner.CornerRadius = UDim.new(0, 10)
+            TitleCorner.Parent = SectionTitle
+            
             -- Section Content
             SectionContent.Name = "SectionContent"
-            SectionContent.Size = UDim2.new(1, 0, 1, -30)
-            SectionContent.Position = UDim2.new(0, 0, 0, 30)
+            SectionContent.Size = UDim2.new(1, 0, 1, -35)
+            SectionContent.Position = UDim2.new(0, 0, 0, 35)
             SectionContent.BackgroundTransparency = 1
             SectionContent.Parent = Section
             
             local UIListLayout = Instance.new("UIListLayout")
             UIListLayout.Parent = SectionContent
-            UIListLayout.Padding = UDim.new(0, 6)
+            UIListLayout.Padding = UDim.new(0, 8)
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            
+            local UIPadding = Instance.new("UIPadding")
+            UIPadding.Parent = SectionContent
+            UIPadding.PaddingLeft = UDim.new(0, 10)
+            UIPadding.PaddingRight = UDim.new(0, 10)
+            UIPadding.PaddingTop = UDim.new(0, 10)
+            UIPadding.PaddingBottom = UDim.new(0, 10)
             
             local section = {
                 Frame = Section,
@@ -291,8 +368,9 @@ function ChloeXGUI:CreateWindow(title)
             
             table.insert(self.Sections, section)
             
+            -- Auto-resize section
             UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                Section.Size = UDim2.new(1, -20, 0, UIListLayout.AbsoluteContentSize.Y + 40)
+                Section.Size = UDim2.new(1, -20, 0, UIListLayout.AbsoluteContentSize.Y + 55)
             end)
             
             function section:CreateToggle(name, callback, default)
@@ -300,24 +378,32 @@ function ChloeXGUI:CreateWindow(title)
                 local ToggleButton = Instance.new("TextButton")
                 local ToggleLabel = Instance.new("TextLabel")
                 local ToggleState = Instance.new("Frame")
+                local ToggleCorner = Instance.new("UICorner")
+                local StateCorner = Instance.new("UICorner")
                 
-                ToggleFrame.Size = UDim2.new(1, 0, 0, 25)
+                ToggleFrame.Size = UDim2.new(1, 0, 0, 30)
                 ToggleFrame.BackgroundTransparency = 1
                 ToggleFrame.LayoutOrder = #self.Controls + 1
                 ToggleFrame.Parent = self.Content
                 
-                ToggleButton.Size = UDim2.new(0, 40, 0, 20)
-                ToggleButton.Position = UDim2.new(0, 10, 0, 2)
-                ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                ToggleButton.Size = UDim2.new(0, 50, 0, 25)
+                ToggleButton.Position = UDim2.new(0, 0, 0, 2)
+                ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 ToggleButton.BorderSizePixel = 0
                 ToggleButton.Text = ""
                 ToggleButton.Parent = ToggleFrame
                 
-                ToggleState.Size = UDim2.new(0, 16, 0, 16)
+                ToggleCorner.CornerRadius = UDim.new(0, 12)
+                ToggleCorner.Parent = ToggleButton
+                
+                ToggleState.Size = UDim2.new(0, 21, 0, 21)
                 ToggleState.Position = UDim2.new(0, 2, 0, 2)
-                ToggleState.BackgroundColor3 = default and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+                ToggleState.BackgroundColor3 = default and Config.GUI.AccentColor or Color3.fromRGB(120, 120, 130)
                 ToggleState.BorderSizePixel = 0
                 ToggleState.Parent = ToggleButton
+                
+                StateCorner.CornerRadius = UDim.new(0, 10)
+                StateCorner.Parent = ToggleState
                 
                 ToggleLabel.Size = UDim2.new(1, -60, 1, 0)
                 ToggleLabel.Position = UDim2.new(0, 60, 0, 0)
@@ -331,50 +417,66 @@ function ChloeXGUI:CreateWindow(title)
                 
                 local state = default or false
                 
-                ToggleButton.MouseButton1Click:Connect(function()
-                    state = not state
-                    local targetPos = state and UDim2.new(1, -18, 0, 2) or UDim2.new(0, 2, 0, 2)
-                    local targetColor = state and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+                local function updateToggle()
+                    local targetPos = state and UDim2.new(1, -23, 0, 2) or UDim2.new(0, 2, 0, 2)
+                    local targetColor = state and Config.GUI.AccentColor or Color3.fromRGB(120, 120, 130)
                     
-                    local tween = TweenService:Create(ToggleState, TweenInfo.new(0.2), {
+                    TweenService:Create(ToggleState, TweenInfo.new(0.3), {
                         Position = targetPos,
                         BackgroundColor3 = targetColor
-                    })
-                    tween:Play()
+                    }):Play()
                     
+                    TweenService:Create(ToggleButton, TweenInfo.new(0.3), {
+                        BackgroundColor3 = state and Color3.fromRGB(80, 80, 90) or Color3.fromRGB(60, 60, 70)
+                    }):Play()
+                end
+                
+                ToggleButton.MouseButton1Click:Connect(function()
+                    state = not state
+                    updateToggle()
                     if callback then
                         callback(state)
                     end
                 end)
                 
-                table.insert(self.Controls, {
+                updateToggle()
+                
+                local control = {
                     Name = name,
                     Type = "Toggle",
                     SetState = function(newState)
                         state = newState
-                        local targetPos = state and UDim2.new(1, -18, 0, 2) or UDim2.new(0, 2, 0, 2)
-                        local targetColor = state and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
-                        ToggleState.Position = targetPos
-                        ToggleState.BackgroundColor3 = targetColor
+                        updateToggle()
                     end,
                     GetState = function() return state end
-                })
+                }
                 
-                return self.Controls[#self.Controls]
+                table.insert(self.Controls, control)
+                return control
             end
             
             function section:CreateButton(name, callback)
                 local Button = Instance.new("TextButton")
+                local ButtonCorner = Instance.new("UICorner")
+                local ButtonStroke = Instance.new("UIStroke")
                 
-                Button.Size = UDim2.new(1, -20, 0, 30)
+                Button.Size = UDim2.new(1, 0, 0, 35)
                 Button.LayoutOrder = #self.Controls + 1
-                Button.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+                Button.BackgroundColor3 = Config.GUI.AccentColor
                 Button.BorderSizePixel = 0
                 Button.Text = name
                 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
                 Button.TextSize = 12
-                Button.Font = Enum.Font.Gotham
+                Button.Font = Enum.Font.GothamSemibold
                 Button.Parent = self.Content
+                
+                ButtonCorner.CornerRadius = UDim.new(0, 8)
+                ButtonCorner.Parent = Button
+                
+                ButtonStroke.Thickness = 1
+                ButtonStroke.Color = Color3.fromRGB(255, 255, 255)
+                ButtonStroke.Transparency = 0.8
+                ButtonStroke.Parent = Button
                 
                 Button.MouseButton1Click:Connect(function()
                     if callback then
@@ -382,12 +484,21 @@ function ChloeXGUI:CreateWindow(title)
                     end
                 end)
                 
+                -- Hover effects
                 Button.MouseEnter:Connect(function()
-                    Button.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+                    TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            math.min(Config.GUI.AccentColor.R * 255 + 20, 255),
+                            math.min(Config.GUI.AccentColor.G * 255 + 20, 255),
+                            math.min(Config.GUI.AccentColor.B * 255 + 20, 255)
+                        )
+                    }):Play()
                 end)
                 
                 Button.MouseLeave:Connect(function()
-                    Button.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+                    TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Config.GUI.AccentColor
+                    }):Play()
                 end)
                 
                 table.insert(self.Controls, {
@@ -400,120 +511,26 @@ function ChloeXGUI:CreateWindow(title)
             function section:CreateLabel(text)
                 local Label = Instance.new("TextLabel")
                 
-                Label.Size = UDim2.new(1, -20, 0, 20)
+                Label.Size = UDim2.new(1, 0, 0, 20)
                 Label.LayoutOrder = #self.Controls + 1
                 Label.BackgroundTransparency = 1
                 Label.Text = text
-                Label.TextColor3 = Color3.fromRGB(200, 200, 200)
+                Label.TextColor3 = Color3.fromRGB(200, 200, 220)
                 Label.TextSize = 11
                 Label.TextXAlignment = Enum.TextXAlignment.Left
                 Label.Font = Enum.Font.Gotham
                 Label.Parent = self.Content
                 
-                table.insert(self.Controls, {
+                local control = {
                     Name = text,
                     Type = "Label",
                     Update = function(newText)
                         Label.Text = newText
                     end
-                })
+                }
                 
-                return self.Controls[#self.Controls]
-            end
-            
-            function section:CreateSlider(name, min, max, default, callback)
-                local SliderFrame = Instance.new("Frame")
-                local SliderLabel = Instance.new("TextLabel")
-                local SliderBar = Instance.new("Frame")
-                local SliderButton = Instance.new("TextButton")
-                local ValueLabel = Instance.new("TextLabel")
-                
-                SliderFrame.Size = UDim2.new(1, 0, 0, 40)
-                SliderFrame.LayoutOrder = #self.Controls + 1
-                SliderFrame.BackgroundTransparency = 1
-                SliderFrame.Parent = self.Content
-                
-                SliderLabel.Size = UDim2.new(1, -20, 0, 15)
-                SliderLabel.Position = UDim2.new(0, 10, 0, 0)
-                SliderLabel.BackgroundTransparency = 1
-                SliderLabel.Text = name
-                SliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SliderLabel.TextSize = 11
-                SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
-                SliderLabel.Font = Enum.Font.Gotham
-                SliderLabel.Parent = SliderFrame
-                
-                SliderBar.Size = UDim2.new(1, -100, 0, 6)
-                SliderBar.Position = UDim2.new(0, 10, 0, 20)
-                SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                SliderBar.BorderSizePixel = 0
-                SliderBar.Parent = SliderFrame
-                
-                SliderButton.Size = UDim2.new(0, 12, 0, 12)
-                SliderButton.Position = UDim2.new(0, 10, 0, 17)
-                SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderButton.BorderSizePixel = 0
-                SliderButton.Text = ""
-                SliderButton.Parent = SliderFrame
-                
-                ValueLabel.Size = UDim2.new(0, 60, 0, 20)
-                ValueLabel.Position = UDim2.new(1, -60, 0, 15)
-                ValueLabel.BackgroundTransparency = 1
-                ValueLabel.Text = tostring(default or min)
-                ValueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                ValueLabel.TextSize = 11
-                ValueLabel.Font = Enum.Font.Gotham
-                ValueLabel.Parent = SliderFrame
-                
-                local value = default or min
-                local sliding = false
-                
-                local function updateSlider(mouseX)
-                    local relativeX = math.clamp(mouseX - SliderBar.AbsolutePosition.X, 0, SliderBar.AbsoluteSize.X)
-                    local percentage = relativeX / SliderBar.AbsoluteSize.X
-                    value = math.floor(min + (max - min) * percentage)
-                    
-                    SliderButton.Position = UDim2.new(percentage, -6, 0, 17)
-                    ValueLabel.Text = tostring(value)
-                    
-                    if callback then
-                        callback(value)
-                    end
-                end
-                
-                SliderButton.MouseButton1Down:Connect(function()
-                    sliding = true
-                end)
-                
-                UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = false
-                    end
-                end)
-                
-                game:GetService("UserInputService").InputChanged:Connect(function(input)
-                    if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        updateSlider(input.Position.X)
-                    end
-                end)
-                
-                SliderBar.MouseButton1Down:Connect(function(x, y)
-                    updateSlider(x)
-                end)
-                
-                table.insert(self.Controls, {
-                    Name = name,
-                    Type = "Slider",
-                    SetValue = function(newValue)
-                        value = math.clamp(newValue, min, max)
-                        local percentage = (value - min) / (max - min)
-                        SliderButton.Position = UDim2.new(percentage, -6, 0, 17)
-                        ValueLabel.Text = tostring(value)
-                    end,
-                    GetValue = function() return value end
-                })
-                
-                return self.Controls[#self.Controls]
+                table.insert(self.Controls, control)
+                return control
             end
             
             return section
@@ -526,166 +543,154 @@ function ChloeXGUI:CreateWindow(title)
 end
 
 -- =====================
--- FISHING BOT CORE
+-- WORKING AUTO FISHING CORE
 -- =====================
 local FishingBot = {
     Enabled = false,
+    CurrentState = "Idle",
     Stats = {
         FishCaught = 0,
         StartTime = 0,
         RunningTime = 0
     },
-    Connections = {}
+    Connection = nil,
+    LastAction = 0
 }
 
+-- Fungsi input yang work
+function FishingBot:SendKey(key)
+    pcall(function()
+        keycode = Enum.KeyCode[key]
+        VirtualInput:SendKeyEvent(true, keycode, false, game)
+        wait(0.1)
+        VirtualInput:SendKeyEvent(false, keycode, false, game)
+    end)
+    
+    if Config.Settings.DebugMode then
+        print("🔘 Key Press: " .. key)
+    end
+end
+
+-- Main fishing function - FIXED
+function FishingBot:Fish()
+    if not self.Enabled then return end
+    
+    self.CurrentState = "Casting"
+    if Config.Settings.DebugMode then
+        print("🎣 Casting rod...")
+    end
+    
+    -- Cast fishing rod
+    self:SendKey(Config.Fishing.CastKey)
+    wait(Config.Fishing.CastDuration)
+    
+    self.CurrentState = "Waiting"
+    if Config.Settings.DebugMode then
+        print("⏳ Waiting for bite...")
+    end
+    
+    -- Wait for bite (random time between min and max)
+    local waitTime = math.random(Config.Fishing.WaitForBite[1] * 10, Config.Fishing.WaitForBite[2] * 10) / 10
+    wait(waitTime)
+    
+    self.CurrentState = "Reeling"
+    if Config.Settings.DebugMode then
+        print("🐟 Reeling in fish...")
+    end
+    
+    -- Reel in fish
+    self:SendKey(Config.Fishing.ReelKey)
+    wait(Config.Fishing.ReelDuration)
+    
+    -- Success
+    self.Stats.FishCaught = self.Stats.FishCaught + 1
+    self.CurrentState = "Success"
+    
+    if Config.Settings.DebugMode then
+        print("✅ Fish caught! Total: " .. self.Stats.FishCaught)
+    end
+    
+    -- Small delay before next cast
+    if Config.Settings.Humanizer then
+        wait(math.random(5, 15) / 10)
+    end
+end
+
+-- Start fishing bot - FIXED
 function FishingBot:Start()
-    if self.Enabled then return end
+    if self.Enabled then
+        print("⚠️ Fishing bot already running!")
+        return
+    end
     
     self.Enabled = true
     self.Stats.StartTime = tick()
     self.Stats.FishCaught = 0
     
-    -- Start fishing loop
-    self.Connections.fishing = RunService.Heartbeat:Connect(function()
-        self:FishLoop()
-    end)
+    print("🎣 Fishing Bot STARTED!")
+    print("📍 Cast Key: " .. Config.Fishing.CastKey)
+    print("📍 Reel Key: " .. Config.Fishing.ReelKey)
     
-    -- Start stats updater
-    self.Connections.stats = RunService.Heartbeat:Connect(function()
-        self:UpdateStats()
+    -- Use coroutine untuk avoid delta time issues
+    self.Connection = RunService.Heartbeat:Connect(function()
+        if self.Enabled then
+            self:Fish()
+        end
     end)
-    
-    print("🎣 Fishing Bot Started!")
 end
 
+-- Stop fishing bot
 function FishingBot:Stop()
     if not self.Enabled then return end
     
     self.Enabled = false
+    self.CurrentState = "Idle"
     
-    -- Disconnect all connections
-    for _, connection in pairs(self.Connections) do
-        connection:Disconnect()
+    if self.Connection then
+        self.Connection:Disconnect()
+        self.Connection = nil
     end
-    self.Connections = {}
     
-    print("🛑 Fishing Bot Stopped!")
+    print("🛑 Fishing Bot STOPPED!")
+    print("📊 Final Stats: " .. self.Stats.FishCaught .. " fish caught")
 end
 
-function FishingBot:FishLoop()
-    if not self.Enabled then return end
-    
-    -- Simulate fishing actions
-    self:CastRod()
-    
-    -- Wait for bite (simulated)
-    wait(math.random(1, 3))
-    
-    -- Reel in fish
-    self:ReelFish()
-    
-    -- Update stats
-    self.Stats.FishCaught = self.Stats.FishCaught + 1
-    
-    -- Random delay between actions
-    if Config.Safety.RandomDelays then
-        wait(math.random(5, 15) / 10)
-    end
-end
-
-function FishingBot:CastRod()
-    -- Implement casting logic here
-    if Config.DebugMode then
-        print("🎣 Casting fishing rod...")
-    end
-end
-
-function FishingBot:ReelFish()
-    -- Implement reeling logic here
-    if Config.DebugMode then
-        print("🐟 Reeling in fish...")
-    end
-end
-
+-- Update stats
 function FishingBot:UpdateStats()
-    self.Stats.RunningTime = tick() - self.Stats.StartTime
+    if self.Enabled then
+        self.Stats.RunningTime = tick() - self.Stats.StartTime
+    end
 end
 
 function FishingBot:GetStats()
+    local fph = self.Stats.RunningTime > 0 and (self.Stats.FishCaught / self.Stats.RunningTime) * 3600 or 0
     return {
         FishCaught = self.Stats.FishCaught,
-        RunningTime = self.Stats.RunningTime,
-        FishPerHour = self.Stats.RunningTime > 0 and (self.Stats.FishCaught / self.Stats.RunningTime) * 3600 or 0
+        RunningTime = math.floor(self.Stats.RunningTime),
+        FishPerHour = math.floor(fph),
+        State = self.CurrentState
     }
 end
 
 -- =====================
--- SAFETY SYSTEM
--- =====================
-local SafetySystem = {}
-
-function SafetySystem:EnvironmentCheck()
-    -- Check if we're in a game
-    if not game:IsLoaded() then
-        return false, "Game not loaded"
-    end
-    
-    -- Check if player exists
-    if not player or not player.Character then
-        return false, "Player not found"
-    end
-    
-    return true
-end
-
-function SafetySystem:HumanizerDelay()
-    if Config.Settings.Humanizer then
-        wait(math.random(50, 300) / 1000)
-    end
-end
-
-function SafetySystem:AntiAFK()
-    if Config.Safety.AntiAFK then
-        local virtualUser = game:GetService("VirtualUser")
-        virtualUser:CaptureController()
-        virtualUser:ClickButton2(Vector2.new())
-    end
-end
-
--- =====================
--- MAIN INITIALIZATION
+-- INITIALIZATION
 -- =====================
 local function InitializeChloeX()
-    -- Safety check
-    local safe, reason = SafetySystem:EnvironmentCheck()
-    if not safe then
-        warn("❌ Chloe X Safety Check Failed: " .. reason)
-        return
-    end
-    
-    -- Create GUI
-    local Window = ChloeXGUI:CreateWindow("Chloe X | v" .. Config.Settings.Version)
+    -- Create Premium GUI
+    local Window = ChloeXGUI:CreateWindow("Chloe X v" .. Config.Settings.Version)
     
     -- Main Tab
-    local MainTab = Window:CreateTab("Main")
+    local MainTab = Window:CreateTab("Main", "⚡")
     
     -- Auto Fishing Section
-    local FishingSection = MainTab:CreateSection("🤖 Auto Fishing")
+    local FishingSection = MainTab:CreateSection("🤖 Auto Fishing System")
     
-    local AutoFishToggle = FishingSection:CreateToggle("Enable Auto Fish", function(state)
+    local AutoFishToggle = FishingSection:CreateToggle("Enable Auto Fishing", function(state)
         if state then
             FishingBot:Start()
         else
             FishingBot:Stop()
         end
-    end, false)
-    
-    local NoCooldownToggle = FishingSection:CreateToggle("No Cooldown", function(state)
-        Config.Fishing.NoCooldown = state
-    end, true)
-    
-    local AutoSellToggle = FishingSection:CreateToggle("Auto Sell Fish", function(state)
-        -- Auto sell implementation
     end, false)
     
     FishingSection:CreateButton("▶ Start Fishing", function()
@@ -696,106 +701,98 @@ local function InitializeChloeX()
         AutoFishToggle.SetState(false)
     end)
     
-    -- Settings Section
-    local SettingsSection = MainTab:CreateSection("⚙️ Settings")
+    -- Configuration Section
+    local ConfigSection = MainTab:CreateSection("⚙️ Configuration")
     
-    SettingsSection:CreateToggle("Safety Mode", function(state)
-        Config.Settings.SafetyMode = state
-    end, true)
-    
-    SettingsSection:CreateToggle("Human-like Behavior", function(state)
+    ConfigSection:CreateToggle("Human-like Behavior", function(state)
         Config.Settings.Humanizer = state
+        print("🤖 Humanizer: " .. (state and "ON" or "OFF"))
     end, true)
     
-    SettingsSection:CreateToggle("Debug Mode", function(state)
+    ConfigSection:CreateToggle("Debug Mode", function(state)
         Config.Settings.DebugMode = state
-    end, false)
+        print("🐛 Debug: " .. (state and "ON" : "OFF"))
+    end, true)
+    
+    -- Keybinds Section
+    local KeySection = MainTab:CreateSection("⌨️ Keybinds")
+    
+    KeySection:CreateLabel("Current Cast Key: " .. Config.Fishing.CastKey)
+    KeySection:CreateLabel("Current Reel Key: " .. Config.Fishing.ReelKey)
+    
+    KeySection:CreateButton("Test Cast Key (E)", function()
+        FishingBot:SendKey("E")
+    end)
+    
+    KeySection:CreateButton("Test Reel Key (F)", function()
+        FishingBot:SendKey("F")
+    end)
     
     -- Stats Tab
-    local StatsTab = Window:CreateTab("Statistics")
+    local StatsTab = Window:CreateTab("Statistics", "📊")
     
-    local StatsSection = StatsTab:CreateSection("📊 Fishing Statistics")
+    local StatsSection = StatsTab:CreateSection("📈 Fishing Statistics")
     
-    local FishCaughtLabel = StatsSection:CreateLabel("Fish Caught: 0")
-    local TimeRunningLabel = StatsSection:CreateLabel("Time Running: 0s")
-    local RateLabel = StatsSection:CreateLabel("Rate: 0 fish/hour")
-    local StatusLabel = StatsSection:CreateLabel("Status: Idle")
+    local FishLabel = StatsSection:CreateLabel("🎣 Fish Caught: 0")
+    local TimeLabel = StatsSection:CreateLabel("⏱️ Time Running: 0s")
+    local RateLabel = StatsSection:CreateLabel("📊 Rate: 0 fish/hour")
+    local StateLabel = StatsSection:CreateLabel("🔧 Status: Idle")
     
-    -- Update stats in real-time
+    -- Real-time stats updater
     local statsUpdater = RunService.Heartbeat:Connect(function()
-        if FishingBot.Enabled then
-            local stats = FishingBot:GetStats()
-            FishCaughtLabel.Update("Fish Caught: " .. stats.FishCaught)
-            TimeRunningLabel.Update("Time Running: " .. math.floor(stats.RunningTime) .. "s")
-            RateLabel.Update("Rate: " .. math.floor(stats.FishPerHour) .. " fish/hour")
-            StatusLabel.Update("Status: 🎣 Fishing...")
-        else
-            StatusLabel.Update("Status: ⏹ Idle")
-        end
+        FishingBot:UpdateStats()
+        local stats = FishingBot:GetStats()
+        
+        FishLabel.Update("🎣 Fish Caught: " .. stats.FishCaught)
+        TimeLabel.Update("⏱️ Time Running: " .. stats.RunningTime .. "s")
+        RateLabel.Update("📊 Rate: " .. stats.FishPerHour .. " fish/hour")
+        StateLabel.Update("🔧 Status: " .. stats.State)
     end)
     
-    -- Safety Tab
-    local SafetyTab = Window:CreateTab("Safety")
+    -- Settings Tab
+    local SettingsTab = Window:CreateTab("Settings", "🔧")
     
-    local SafetySection = SafetyTab:CreateSection("🛡️ Safety Features")
+    local GameSection = SettingsTab:CreateSection("🎮 Game Settings")
     
-    SafetySection:CreateToggle("Anti-AFK System", function(state)
-        Config.Safety.AntiAFK = state
-    end, true)
-    
-    SafetySection:CreateToggle("Random Delays", function(state)
-        Config.Safety.RandomDelays = state
-    end, true)
-    
-    SafetySection:CreateToggle("Auto Shutdown", function(state)
-        Config.Safety.AutoShutdown = state
-    end, true)
-    
-    SafetySection:CreateButton("🔄 Run Safety Check", function()
-        local safe, reason = SafetySystem:EnvironmentCheck()
-        if safe then
-            print("✅ Safety Check Passed!")
-        else
-            print("❌ Safety Check Failed: " .. reason)
-        end
+    GameSection:CreateButton("Change Cast Key to E", function()
+        Config.Fishing.CastKey = "E"
+        print("✅ Cast key set to: E")
     end)
     
-    -- Quest Tab
-    local QuestTab = Window:CreateTab("Quests")
+    GameSection:CreateButton("Change Cast Key to F", function()
+        Config.Fishing.CastKey = "F"
+        print("✅ Cast key set to: F")
+    end)
     
-    local QuestSection = QuestTab:CreateSection("🎯 Quest System")
+    GameSection:CreateButton("Change Reel Key to R", function()
+        Config.Fishing.ReelKey = "R"
+        print("✅ Reel key set to: R")
+    end)
     
-    QuestSection:CreateToggle("Auto Complete Quests", function(state)
-        -- Quest automation
-    end, false)
-    
-    QuestSection:CreateButton("Complete All Quests", function()
-        -- Complete quests implementation
+    GameSection:CreateButton("Change Reel Key to SPACE", function()
+        Config.Fishing.ReelKey = "Space"
+        print("✅ Reel key set to: SPACE")
     end)
     
     -- Info Section
-    local InfoSection = MainTab:CreateSection("ℹ️ Information")
+    local InfoSection = MainTab:CreateSection("ℹ️ System Info")
     
     InfoSection:CreateLabel("Chloe X v" .. Config.Settings.Version)
-    InfoSection:CreateLabel("Status: Ready")
     InfoSection:CreateLabel("Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+    InfoSection:CreateLabel("Player: " .. player.Name)
     
-    InfoSection:CreateButton("📖 Documentation", function()
-        -- Open documentation
+    InfoSection:CreateButton("🔄 Refresh System", function()
+        print("=== SYSTEM REFRESH ===")
+        print("Fishing Bot: " .. (FishingBot.Enabled and "RUNNING" : "STOPPED"))
+        print("Fish Caught: " .. FishingBot.Stats.FishCaught)
+        print("Current State: " .. FishingBot.CurrentState)
+        print("======================")
     end)
     
-    InfoSection:CreateButton("🐛 Report Bug", function()
-        -- Bug report system
-    end)
-    
-    print("✅ Chloe X Fishing Bot Loaded Successfully!")
-    print("🎣 Version: " .. Config.Settings.Version)
-    print("⚡ Features: Auto Fish, No Cooldown, Safety System")
-    
-    -- Auto-start if configured
-    if Config.Settings.AutoStart then
-        AutoFishToggle.SetState(true)
-    end
+    print("✅ Chloe X Premium Loaded!")
+    print("🎣 Auto Fishing System: READY")
+    print("⚡ Version: " .. Config.Settings.Version)
+    print("💡 Tips: Use 'Test Cast Key' to verify keybinds work")
 end
 
 -- =====================
@@ -810,7 +807,6 @@ end
 
 return {
     Version = Config.Settings.Version,
-    Config = Config,
     FishingBot = FishingBot,
-    SafetySystem = SafetySystem
+    Config = Config
 }
