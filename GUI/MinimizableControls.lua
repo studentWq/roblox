@@ -1,13 +1,13 @@
 -- GUI/MinimizableControls.lua
--- Minimizable Controls System dengan Rod Status
+-- Minimizable Controls System dengan Refresh Feature
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
--- Load modules dari GitHub
-local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Core/Config.lua"))()
-local CyberNeonGUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/GUI/CyberNeonGUI.lua"))()
+-- Load modules dari GitHub dengan cache busting
+local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Core/Config.lua?v=" .. tick()))()
+local CyberNeonGUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/GUI/CyberNeonGUI.lua?v=" .. tick()))()
 
 local MinimizableControls = {}
 
@@ -15,6 +15,7 @@ function MinimizableControls.Create(gui, fishItBot, cleanupSystem)
     -- Title Bar (Minimal)
     local TitleBar = Instance.new("Frame")
     local Title = Instance.new("TextLabel")
+    local RefreshBtn = Instance.new("TextButton")
     local MinimizeBtn = Instance.new("TextButton")
     local CloseBtn = Instance.new("TextButton")
     
@@ -40,10 +41,29 @@ function MinimizableControls.Create(gui, fishItBot, cleanupSystem)
     
     cleanupSystem:AddInterface(Title)
     
+    -- Refresh Button
+    RefreshBtn.Name = "RefreshBtn"
+    RefreshBtn.Size = UDim2.new(0, 20, 0, 20)
+    RefreshBtn.Position = UDim2.new(1, -90, 0, 2)
+    RefreshBtn.BackgroundColor3 = gui.Colors.Info
+    RefreshBtn.BackgroundTransparency = 0.7
+    RefreshBtn.BorderSizePixel = 0
+    RefreshBtn.Text = "⟳"
+    RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    RefreshBtn.TextSize = 12
+    RefreshBtn.Font = Enum.Font.GothamBold
+    RefreshBtn.Parent = TitleBar
+    
+    local RefreshCorner = Instance.new("UICorner")
+    RefreshCorner.CornerRadius = UDim.new(0, 6)
+    RefreshCorner.Parent = RefreshBtn
+    
+    cleanupSystem:AddInterface(RefreshBtn)
+    
     -- Minimize Button
     MinimizeBtn.Name = "MinimizeBtn"
     MinimizeBtn.Size = UDim2.new(0, 20, 0, 20)
-    MinimizeBtn.Position = UDim2.new(1, -45, 0, 2)
+    MinimizeBtn.Position = UDim2.new(1, -65, 0, 2)
     MinimizeBtn.BackgroundColor3 = gui.Colors.Secondary
     MinimizeBtn.BackgroundTransparency = 0.7
     MinimizeBtn.BorderSizePixel = 0
@@ -62,7 +82,7 @@ function MinimizableControls.Create(gui, fishItBot, cleanupSystem)
     -- Close Button
     CloseBtn.Name = "CloseBtn"
     CloseBtn.Size = UDim2.new(0, 20, 0, 20)
-    CloseBtn.Position = UDim2.new(1, -20, 0, 2)
+    CloseBtn.Position = UDim2.new(1, -40, 0, 2)
     CloseBtn.BackgroundColor3 = gui.Colors.Danger
     CloseBtn.BackgroundTransparency = 0.7
     CloseBtn.BorderSizePixel = 0
@@ -78,6 +98,21 @@ function MinimizableControls.Create(gui, fishItBot, cleanupSystem)
     
     cleanupSystem:AddInterface(CloseBtn)
     
+    -- Version Label
+    local VersionLabel = Instance.new("TextLabel")
+    VersionLabel.Name = "VersionLabel"
+    VersionLabel.Size = UDim2.new(0, 40, 1, 0)
+    VersionLabel.Position = UDim2.new(1, -135, 0, 0)
+    VersionLabel.BackgroundTransparency = 1
+    VersionLabel.Text = "v3.1"
+    VersionLabel.TextColor3 = gui.Colors.Warning
+    VersionLabel.TextSize = 9
+    VersionLabel.Font = Enum.Font.Gotham
+    VersionLabel.TextXAlignment = Enum.TextXAlignment.Right
+    VersionLabel.Parent = TitleBar
+    
+    cleanupSystem:AddInterface(VersionLabel)
+    
     -- Mini Stats (Selalu visible)
     local MiniStats = MinimizableControls.CreateMiniStats(gui, fishItBot, cleanupSystem)
     
@@ -87,8 +122,10 @@ function MinimizableControls.Create(gui, fishItBot, cleanupSystem)
     -- Setup interactions
     MinimizableControls.SetupInteractions(gui, fishItBot, cleanupSystem, {
         TitleBar = TitleBar,
+        RefreshBtn = RefreshBtn,
         MinimizeBtn = MinimizeBtn,
         CloseBtn = CloseBtn,
+        VersionLabel = VersionLabel,
         ExpandedContent = ExpandedContent,
         MiniStats = MiniStats
     })
@@ -149,7 +186,7 @@ end
 function MinimizableControls.CreateExpandedContent(gui, fishItBot, cleanupSystem)
     local ExpandedContent = Instance.new("Frame")
     ExpandedContent.Name = "ExpandedContent"
-    ExpandedContent.Size = UDim2.new(1, -10, 0, 180) -- Increased height
+    ExpandedContent.Size = UDim2.new(1, -10, 0, 200) -- Increased height for refresh button
     ExpandedContent.Position = UDim2.new(0, 5, 0, 65)
     ExpandedContent.BackgroundTransparency = 1
     ExpandedContent.Visible = false
@@ -175,6 +212,10 @@ function MinimizableControls.CreateExpandedContent(gui, fishItBot, cleanupSystem
     local EquipBtn = CyberNeonGUI.CreateNeonButton(ExpandedContent, "🔧 MANUAL EQUIP ROD", gui.Colors.Info)
     cleanupSystem:AddInterface(EquipBtn)
     
+    -- Refresh Script Button
+    local RefreshBtn = CyberNeonGUI.CreateNeonButton(ExpandedContent, "🔄 RELOAD LATEST SCRIPT", gui.Colors.Warning)
+    cleanupSystem:AddInterface(RefreshBtn)
+    
     -- Stats Display
     local StatsFrame = MinimizableControls.CreateStatsDisplay(ExpandedContent, gui, cleanupSystem)
     
@@ -186,6 +227,7 @@ function MinimizableControls.CreateExpandedContent(gui, fishItBot, cleanupSystem
         StartBtn = StartBtn,
         StopBtn = StopBtn,
         EquipBtn = EquipBtn,
+        RefreshBtn = RefreshBtn,
         StatsFrame = StatsFrame,
         RodFrame = RodFrame
     }
@@ -306,6 +348,60 @@ function MinimizableControls.SetupInteractions(gui, fishItBot, cleanupSystem, el
     end)
     cleanupSystem:AddConnection(minimizeConnection)
     
+    -- REFRESH BUTTON - Reload script dari GitHub
+    local refreshConnection = elements.RefreshBtn.MouseButton1Click:Connect(function()
+        print("🔄 Refresh button clicked - Reloading latest version...")
+        
+        -- Show loading state
+        elements.RefreshBtn.Text = "⏳"
+        elements.RefreshBtn.BackgroundColor3 = gui.Colors.Warning
+        
+        -- Stop fishing bot terlebih dahulu
+        fishItBot:Stop()
+        
+        -- Execute cleanup
+        cleanupSystem:ExecuteCleanup()
+        
+        -- Tunggu sebentar
+        wait(0.5)
+        
+        -- Reload script menggunakan global function
+        if _G.ChloeXReload then
+            _G.ChloeXReload()
+        else
+            -- Fallback: reload manual
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Main.lua?v=" .. tick()))()
+        end
+    end)
+    cleanupSystem:AddConnection(refreshConnection)
+    
+    -- REFRESH BUTTON di expanded content
+    local refreshExpandedConnection = elements.ExpandedContent.RefreshBtn.MouseButton1Click:Connect(function()
+        print("🔄 Refresh button clicked - Reloading latest version...")
+        
+        -- Show loading state
+        elements.ExpandedContent.RefreshBtn.Text = "⏳ LOADING..."
+        elements.ExpandedContent.RefreshBtn.BackgroundColor3 = gui.Colors.Warning
+        
+        -- Stop fishing bot terlebih dahulu
+        fishItBot:Stop()
+        
+        -- Execute cleanup
+        cleanupSystem:ExecuteCleanup()
+        
+        -- Tunggu sebentar
+        wait(0.5)
+        
+        -- Reload script menggunakan global function
+        if _G.ChloeXReload then
+            _G.ChloeXReload()
+        else
+            -- Fallback: reload manual
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Main.lua?v=" .. tick()))()
+        end
+    end)
+    cleanupSystem:AddConnection(refreshExpandedConnection)
+    
     -- COMPREHENSIVE CLOSE BUTTON - Clean semua proses
     local closeConnection = elements.CloseBtn.MouseButton1Click:Connect(function()
         print("🔴 Close button clicked - Executing full cleanup...")
@@ -347,6 +443,8 @@ function MinimizableControls.SetupInteractions(gui, fishItBot, cleanupSystem, el
     
     -- Setup hover effects
     MinimizableControls.SetupHoverEffects({
+        elements.RefreshBtn,
+        elements.ExpandedContent.RefreshBtn,
         elements.ExpandedContent.StartBtn,
         elements.ExpandedContent.StopBtn,
         elements.ExpandedContent.EquipBtn,
