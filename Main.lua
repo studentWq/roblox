@@ -1,9 +1,9 @@
 -- Chloe X | Fish It Special Edition | Main Loader
--- GitHub: https://github.com/username/ChloeX-FishIt-Bot
+-- GitHub: https://github.com/studentWq/roblox
 
 local function LoadModule(moduleName)
     local success, result = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/username/ChloeX-FishIt-Bot/main/" .. moduleName))()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/" .. moduleName))()
     end)
     
     if success then
