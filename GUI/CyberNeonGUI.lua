@@ -3,7 +3,9 @@
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/username/ChloeX-FishIt-Bot/main/Core/Config.lua"))()
+
+-- Load config dari GitHub
+local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Core/Config.lua"))()
 
 local CyberNeonGUI = {}
 
