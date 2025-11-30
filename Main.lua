@@ -1,10 +1,9 @@
--- Chloe X | Fish It Special Edition | Main Loader dengan Auto Refresh
+-- SiPETUALANG210 | Fish It Bot | Main Loader
 -- GitHub: https://github.com/studentWq/roblox
 
 local function LoadModule(moduleName)
     local success, result = pcall(function()
-        -- Tambahkan cache busting parameter untuk force update
-        local url = "https://raw.githubusercontent.com/studentWq/roblox/main/" .. moduleName .. "?v=" .. tick()
+        local url = "https://raw.githubusercontent.com/studentWq/roblox/main/" .. moduleName
         return loadstring(game:HttpGet(url))()
     end)
     
@@ -18,23 +17,18 @@ end
 
 -- Function untuk reload script sepenuhnya
 local function ReloadScript()
-    print("🔄 Reloading Chloe X Script...")
+    print("🔄 Reloading SiPETUALANG210 Script...")
     
     -- Cleanup existing instances
-    if _G.ChloeXFishIt then
+    if _G.SiPETUALANG210_GUI then
         pcall(function() 
-            if _G.ChloeXCleanup then
-                _G.ChloeXCleanup()
-            end
-            _G.ChloeXFishIt:Destroy() 
+            _G.SiPETUALANG210_GUI:Destroy() 
         end)
     end
     
     -- Clear cache
-    _G.ChloeXFishIt = nil
-    _G.ChloeXLoaded = nil
-    _G.ChloeXCleanup = nil
-    _G.ChloeXVersion = nil
+    _G.SiPETUALANG210_GUI = nil
+    _G.SiPETUALANG210_Loaded = nil
     
     -- Tunggu sebentar untuk cleanup
     wait(0.5)
@@ -47,10 +41,9 @@ local function ReloadScript()
     local MinimizableControls = LoadModule("GUI/MinimizableControls.lua")
     
     -- Initialize system
-    print("⚡ Chloe X - Fish It Special Edition")
+    print("⚡ SiPETUALANG210 - Fish It Bot")
     print("🎯 Optimized for: Fish It")
     print("🎨 Cyber-Neon Transparent GUI")
-    print("🧹 Comprehensive Cleanup System")
     print("🔄 Auto Refresh: ENABLED")
 
     -- Stop any running bot
@@ -61,67 +54,29 @@ local function ReloadScript()
     -- Create GUI
     local success, err = pcall(function()
         local gui = CyberNeonGUI.Create()
-        _G.ChloeXFishIt = gui.ScreenGui
+        _G.SiPETUALANG210_GUI = gui.ScreenGui
         MinimizableControls.Create(gui, FishItBot, CleanupSystem)
-        print("✅ Cyber-Neon GUI Reloaded Successfully!")
-        print("📍 Click − to minimize, + to expand")
-        print("📍 Drag title bar to move")
-        print("📍 Click ⟳ to reload latest version")
-        print("📍 Click × to COMPLETELY cleanup everything")
-        print("🧹 Use _G.ChloeXCleanup() to manually cleanup")
-        print("🔄 Use _G.ChloeXReload() to reload script")
+        print("✅ SiPETUALANG210 GUI Loaded Successfully!")
     end)
 
     if not success then
         warn("❌ GUI Error: " .. err)
-        print("🔧 Starting command mode...")
-        
-        _G.StartFishIt = function() 
-            if FishItBot then FishItBot.Start() end
-        end
-        _G.StopFishIt = function() 
-            if FishItBot then FishItBot.Stop() end
-        end
-        _G.FishItStats = function() 
-            if FishItBot then 
-                local stats = FishItBot.GetStats()
-                print(string.format("🐟 %d | ⏱️ %ds | %s", 
-                      stats.FishCaught, stats.RunningTime, stats.State))
-            end
-        end
-        _G.CleanupAll = function() 
-            if CleanupSystem then CleanupSystem.ExecuteCleanup() end
-        end
-        _G.ReloadScript = ReloadScript
     end
     
     return {
         Bot = FishItBot,
         Cleanup = CleanupSystem,
-        GUI = _G.ChloeXFishIt,
-        Version = "3.1",
-        Reload = ReloadScript
+        GUI = _G.SiPETUALANG210_GUI,
+        Version = "1.0"
     }
 end
 
 -- Register global functions
-_G.ChloeXReload = ReloadScript
-_G.ChloeXCleanup = function()
-    if _G.ChloeXCleanupInstance then
-        _G.ChloeXCleanupInstance()
-    end
-end
+_G.SiPETUALANG210_Reload = ReloadScript
 
 -- Load version info
-local versionInfo = {
-    Version = "3.1",
-    LastUpdate = "2024",
-    Features = "Auto Refresh, Auto Equip Rod, Cyber-Neon GUI"
-}
-
-print("⚡ Chloe X Fishing Bot v" .. versionInfo.Version)
-print("📅 Last Update: " .. versionInfo.LastUpdate)
-print("🎯 Features: " .. versionInfo.Features)
+print("⚡ SiPETUALANG210 Fishing Bot v1.0")
+print("🎯 Ready for Fish It!")
 
 -- Execute reload
 return ReloadScript()
