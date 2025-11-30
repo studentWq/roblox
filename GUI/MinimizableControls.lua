@@ -4,8 +4,10 @@
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/username/ChloeX-FishIt-Bot/main/Core/Config.lua"))()
-local CyberNeonGUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/username/ChloeX-FishIt-Bot/main/GUI/CyberNeonGUI.lua"))()
+
+-- Load modules dari GitHub
+local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Core/Config.lua"))()
+local CyberNeonGUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/GUI/CyberNeonGUI.lua"))()
 
 local MinimizableControls = {}
 
