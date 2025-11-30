@@ -6,7 +6,9 @@ local RunService = game:GetService("RunService")
 local VirtualInput = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
-local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/username/ChloeX-FishIt-Bot/main/Core/Config.lua"))()
+
+-- Load config dari GitHub
+local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Core/Config.lua"))()
 
 local FishItBot = {
     Enabled = false,
