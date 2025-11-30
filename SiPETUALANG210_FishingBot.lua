@@ -1,5 +1,5 @@
--- SiPETUALANG210 | Fish It Bot | Simple Version
--- GitHub: https://github.com/studentWq/roblox
+-- SiPETUALANG210 | Fish It Bot | Specialized for Fish It Game
+-- Game: https://www.roblox.com/games/121864768012064/Fish-It
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,22 +9,28 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
--- Simple Fishing Bot
+-- Fish It Specific Bot
 local FishItBot = {
     Enabled = false,
     FishCaught = 0,
     StartTime = 0,
     Connection = nil,
-    CurrentState = "🛑 IDLE"
+    CurrentState = "🛑 IDLE",
+    IsFishing = false
 }
 
-function FishItBot:GetFishingRod()
-    -- Cek di character
+-- Fish It Specific Rod Detection
+function FishItBot:FindFishingRod()
+    -- Di Fish It, rod biasanya bernama "Fishing Rod"
     local character = player.Character
     if character then
+        -- Cek di tangan karakter
         local tool = character:FindFirstChildOfClass("Tool")
-        if tool and (string.lower(tool.Name):find("rod") or string.lower(tool.Name):find("fishing")) then
-            return tool, true
+        if tool then
+            local name = string.lower(tool.Name)
+            if name:find("rod") or name:find("fishing") then
+                return tool, true
+            end
         end
     end
     
@@ -32,8 +38,11 @@ function FishItBot:GetFishingRod()
     local backpack = player:FindFirstChild("Backpack")
     if backpack then
         for _, item in pairs(backpack:GetChildren()) do
-            if item:IsA("Tool") and (string.lower(item.Name):find("rod") or string.lower(item.Name):find("fishing")) then
-                return item, false
+            if item:IsA("Tool") then
+                local name = string.lower(item.Name)
+                if name:find("rod") or name:find("fishing") then
+                    return item, false
+                end
             end
         end
     end
@@ -41,110 +50,155 @@ function FishItBot:GetFishingRod()
     return nil, false
 end
 
+-- Fish It Specific Equip System
 function FishItBot:EquipRod()
-    local rod, isEquipped = self:GetFishingRod()
+    local rod, isEquipped = self:FindFishingRod()
     
     if not rod then
-        self.CurrentState = "❌ NO ROD"
+        self.CurrentState = "❌ BELUM BELI ROD"
+        print("[Fish It] Belum punya fishing rod! Beli dulu di shop.")
         return false
     end
     
     if isEquipped then
+        self.CurrentState = "✅ ROD SIAP"
         return true
     end
     
-    -- Manual equip dengan parent change
-    self.CurrentState = "🔧 EQUIPPING..."
+    -- Equip rod untuk Fish It
+    self.CurrentState = "🔧 MEMAKAI ROD..."
+    print("[Fish It] Mencoba memakai fishing rod...")
+    
+    -- Method khusus Fish It
     pcall(function()
         rod.Parent = player.Character
     end)
     
-    wait(1)
+    wait(1.5) -- Tunggu animasi equip di Fish It
     
-    -- Cek ulang
-    local newRod, newEquipped = self:GetFishingRod()
+    -- Verifikasi
+    local newRod, newEquipped = self:FindFishingRod()
     if newEquipped then
-        self.CurrentState = "✅ ROD EQUIPPED"
+        self.CurrentState = "✅ ROD TERPASANG"
+        print("[Fish It] Berhasil memakai fishing rod!")
         return true
     end
     
-    self.CurrentState = "❌ EQUIP FAILED"
+    self.CurrentState = "❌ GAGAL PASANG ROD"
+    print("[Fish It] Gagal memakai fishing rod!")
     return false
 end
 
-function FishItBot:UnequipRod()
-    local rod, isEquipped = self:GetFishingRod()
-    if rod and isEquipped then
-        pcall(function()
-            rod.Parent = player.Backpack
-        end)
-    end
-end
-
+-- Fish It Specific Input System
 function FishItBot:SendKey(key)
     pcall(function()
         local keyCode = Enum.KeyCode[key]
+        -- Press and hold untuk Fish It mechanics
         VirtualInput:SendKeyEvent(true, keyCode, false, game)
-        wait(0.1)
+        wait(0.2)
         VirtualInput:SendKeyEvent(false, keyCode, false, game)
     end)
 end
 
-function FishItBot:DetectBite()
-    -- Simple detection - time based
-    return false -- Untuk sekarang pakai timer saja
+-- Fish It Bite Detection
+function FishItBot:DetectFishBite()
+    -- Di Fish It, biasanya ada UI indicator atau sound
+    local playerGui = player:FindFirstChild("PlayerGui")
+    if playerGui then
+        for _, gui in pairs(playerGui:GetChildren()) do
+            if gui:IsA("ScreenGui") then
+                -- Cari text yang menunjukkan bite
+                for _, element in pairs(gui:GetDescendants()) do
+                    if element:IsA("TextLabel") or element:IsA("TextButton") then
+                        local text = string.lower(tostring(element.Text))
+                        if text:find("bite") or text:find("pull") or text:find("fish") then
+                            if element.Visible then
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return false
 end
 
+-- Main Fishing Loop untuk Fish It
 function FishItBot:FishLoop()
     if not self.Enabled then return end
     
-    -- Pastikan rod equipped
+    -- Auto equip rod
     if not self:EquipRod() then
-        wait(2)
+        wait(3)
         return
     end
     
-    -- Cast fishing
-    self.CurrentState = "🎣 CASTING"
+    -- Cast fishing rod (Fish It menggunakan E)
+    self.CurrentState = "🎣 MELEMPAR JORAN..."
+    self.IsFishing = true
     self:SendKey("E")
-    wait(2)
+    wait(2.5) -- Tunggu animasi cast di Fish It
     
     if not self.Enabled then return end
     
-    -- Wait for bite
-    self.CurrentState = "⏳ WAITING"
-    local waitTime = math.random(3, 8)
+    -- Wait for bite dengan detection
+    self.CurrentState = "⏳ MENUNGGU IKAN..."
+    local maxWaitTime = 15 -- Max 15 detik di Fish It
     local startTime = tick()
+    local biteDetected = false
     
-    while tick() - startTime < waitTime do
+    while tick() - startTime < maxWaitTime do
         if not self.Enabled then break end
+        
+        -- Check for bite
+        if self:DetectFishBite() then
+            biteDetected = true
+            break
+        end
+        
         wait(0.1)
     end
     
     if not self.Enabled then return end
     
-    -- Reel in
-    self.CurrentState = "🐟 REELING"
-    self:SendKey("F")
-    wait(1)
+    if biteDetected then
+        -- Reel in fish (Fish It menggunakan F)
+        self.CurrentState = "🐟 MENDAPAT IKAN!"
+        self:SendKey("F")
+        wait(1.5) -- Tunggu animasi reel
+        
+        -- Success
+        self.FishCaught = self.FishCaught + 1
+        self.CurrentState = "✅ IKAN DITANGKAP! #" .. self.FishCaught
+        print("[Fish It] Berhasil menangkap ikan! Total: " .. self.FishCaught)
+    else
+        self.CurrentState = "⏰ TIDAK ADA IKAN"
+        print("[Fish It] Tidak ada ikan yang menggigit, coba lagi...")
+    end
     
-    -- Success
-    self.FishCaught = self.FishCaught + 1
-    self.CurrentState = "✅ CAUGHT #" .. self.FishCaught
+    self.IsFishing = false
     
-    -- Delay
+    -- Delay antara fishing attempts
     if self.Enabled then
         wait(math.random(2, 4))
     end
 end
 
 function FishItBot:Start()
-    if self.Enabled then return end
+    if self.Enabled then 
+        print("[Fish It] Bot sudah berjalan!")
+        return 
+    end
     
     self.Enabled = true
     self.FishCaught = 0
     self.StartTime = tick()
-    self.CurrentState = "🚀 STARTING"
+    self.CurrentState = "🚀 MEMULAI BOT..."
+    
+    print("🎣 MEMULAI FISH IT BOT...")
+    print("📍 Pastikan sudah beli fishing rod!")
+    print("📍 Bot akan auto equip rod dan fishing!")
     
     self.Connection = RunService.Heartbeat:Connect(function()
         if self.Enabled then
@@ -157,11 +211,22 @@ function FishItBot:Stop()
     if not self.Enabled then return end
     
     self.Enabled = false
-    self.CurrentState = "🛑 STOPPED"
+    self.IsFishing = false
+    self.CurrentState = "🛑 BOT BERHENTI"
     
     if self.Connection then
         self.Connection:Disconnect()
         self.Connection = nil
+    end
+    
+    local runTime = tick() - self.StartTime
+    print("🛑 Fish It Bot dihentikan!")
+    print("📊 Total ikan: " .. self.FishCaught)
+    print("⏱️ Waktu: " .. math.floor(runTime) .. " detik")
+    
+    if runTime > 0 then
+        local fishPerHour = (self.FishCaught / runTime) * 3600
+        print("📈 Rate: " .. math.floor(fishPerHour) .. " ikan/jam")
     end
 end
 
@@ -176,21 +241,19 @@ function FishItBot:GetStats()
     }
 end
 
--- Simple GUI
-local function CreateSimpleGUI()
+-- Simple GUI untuk Fish It
+local function CreateFishItGUI()
     local ScreenGui = Instance.new("ScreenGui")
     local MainFrame = Instance.new("Frame")
     local UICorner = Instance.new("UICorner")
     local UIStroke = Instance.new("UIStroke")
     
-    -- ScreenGui
-    ScreenGui.Name = "SiPETUALANG210_GUI"
+    ScreenGui.Name = "SiPETUALANG210_FishIt_GUI"
     ScreenGui.Parent = game.CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Main Frame
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 300, 0, 60)
+    MainFrame.Size = UDim2.new(0, 320, 0, 60)
     MainFrame.Position = UDim2.new(0, 10, 0, 10)
     MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
     MainFrame.BackgroundTransparency = 0.3
@@ -198,11 +261,9 @@ local function CreateSimpleGUI()
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
     
-    -- Rounded Corners
     UICorner.CornerRadius = UDim.new(0, 12)
     UICorner.Parent = MainFrame
     
-    -- Neon Border
     UIStroke.Thickness = 2
     UIStroke.Color = Color3.fromRGB(0, 255, 255)
     UIStroke.Transparency = 0.3
@@ -215,25 +276,23 @@ local function CreateSimpleGUI()
     }
 end
 
--- Create Controls
-local function CreateControls(gui)
+-- Create Controls untuk Fish It
+local function CreateFishItControls(gui)
     -- Title Bar
     local TitleBar = Instance.new("Frame")
     local Title = Instance.new("TextLabel")
     local MinimizeBtn = Instance.new("TextButton")
     local CloseBtn = Instance.new("TextButton")
     
-    -- Title Bar
     TitleBar.Name = "TitleBar"
     TitleBar.Size = UDim2.new(1, 0, 0, 25)
     TitleBar.BackgroundTransparency = 1
     TitleBar.Parent = gui.MainFrame
     
-    -- Title
     Title.Name = "Title"
-    Title.Size = UDim2.new(0, 150, 1, 0)
+    Title.Size = UDim2.new(0, 180, 1, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "SiPETUALANG210"
+    Title.Text = "SiPETUALANG210 - Fish It"
     Title.TextColor3 = Color3.fromRGB(0, 255, 255)
     Title.TextSize = 12
     Title.Font = Enum.Font.GothamBold
@@ -241,14 +300,13 @@ local function CreateControls(gui)
     Title.Parent = TitleBar
     Title.Position = UDim2.new(0, 8, 0, 0)
     
-    -- Minimize Button
     MinimizeBtn.Name = "MinimizeBtn"
     MinimizeBtn.Size = UDim2.new(0, 20, 0, 20)
     MinimizeBtn.Position = UDim2.new(1, -45, 0, 2)
     MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 255)
     MinimizeBtn.BackgroundTransparency = 0.7
     MinimizeBtn.BorderSizePixel = 0
-    MinimizeBtn.Text = "-"
+    MinimizeBtn.Text = "+"
     MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     MinimizeBtn.TextSize = 14
     MinimizeBtn.Font = Enum.Font.GothamBold
@@ -258,7 +316,6 @@ local function CreateControls(gui)
     MinimizeCorner.CornerRadius = UDim.new(0, 6)
     MinimizeCorner.Parent = MinimizeBtn
     
-    -- Close Button
     CloseBtn.Name = "CloseBtn"
     CloseBtn.Size = UDim2.new(0, 20, 0, 20)
     CloseBtn.Position = UDim2.new(1, -20, 0, 2)
@@ -296,7 +353,7 @@ local function CreateControls(gui)
     StateLabel.Size = UDim2.new(0.5, -5, 1, 0)
     StateLabel.Position = UDim2.new(0.5, 5, 0, 0)
     StateLabel.BackgroundTransparency = 1
-    StateLabel.Text = "🛑 IDLE"
+    StateLabel.Text = "🛑 SIAP"
     StateLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
     StateLabel.TextSize = 10
     StateLabel.Font = Enum.Font.Gotham
@@ -315,13 +372,45 @@ local function CreateControls(gui)
     ButtonsLayout.Parent = ExpandedContent
     ButtonsLayout.Padding = UDim.new(0, 5)
     
-    -- Equip Rod Button
+    -- Start Button
+    local StartBtn = Instance.new("TextButton")
+    StartBtn.Size = UDim2.new(1, 0, 0, 35)
+    StartBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 170)
+    StartBtn.BackgroundTransparency = 0.8
+    StartBtn.BorderSizePixel = 0
+    StartBtn.Text = "🚀 START AUTO FISHING"
+    StartBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StartBtn.TextSize = 12
+    StartBtn.Font = Enum.Font.GothamBold
+    StartBtn.Parent = ExpandedContent
+    
+    local StartCorner = Instance.new("UICorner")
+    StartCorner.CornerRadius = UDim.new(0, 8)
+    StartCorner.Parent = StartBtn
+    
+    -- Stop Button
+    local StopBtn = Instance.new("TextButton")
+    StopBtn.Size = UDim2.new(1, 0, 0, 35)
+    StopBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    StopBtn.BackgroundTransparency = 0.8
+    StopBtn.BorderSizePixel = 0
+    StopBtn.Text = "🛑 STOP FISHING"
+    StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StopBtn.TextSize = 12
+    StopBtn.Font = Enum.Font.GothamBold
+    StopBtn.Parent = ExpandedContent
+    
+    local StopCorner = Instance.new("UICorner")
+    StopCorner.CornerRadius = UDim.new(0, 8)
+    StopCorner.Parent = StopBtn
+    
+    -- Manual Equip Button
     local EquipBtn = Instance.new("TextButton")
     EquipBtn.Size = UDim2.new(1, 0, 0, 30)
     EquipBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
     EquipBtn.BackgroundTransparency = 0.8
     EquipBtn.BorderSizePixel = 0
-    EquipBtn.Text = "🔧 EQUIP ROD"
+    EquipBtn.Text = "🔧 MANUAL EQUIP ROD"
     EquipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     EquipBtn.TextSize = 11
     EquipBtn.Font = Enum.Font.GothamBold
@@ -331,77 +420,9 @@ local function CreateControls(gui)
     EquipCorner.CornerRadius = UDim.new(0, 8)
     EquipCorner.Parent = EquipBtn
     
-    local EquipStroke = Instance.new("UIStroke")
-    EquipStroke.Thickness = 1
-    EquipStroke.Color = Color3.fromRGB(100, 100, 255)
-    EquipStroke.Parent = EquipBtn
-    
-    -- Start Button
-    local StartBtn = Instance.new("TextButton")
-    StartBtn.Size = UDim2.new(1, 0, 0, 30)
-    StartBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 170)
-    StartBtn.BackgroundTransparency = 0.8
-    StartBtn.BorderSizePixel = 0
-    StartBtn.Text = "🚀 START FISHING"
-    StartBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    StartBtn.TextSize = 11
-    StartBtn.Font = Enum.Font.GothamBold
-    StartBtn.Parent = ExpandedContent
-    
-    local StartCorner = Instance.new("UICorner")
-    StartCorner.CornerRadius = UDim.new(0, 8)
-    StartCorner.Parent = StartBtn
-    
-    local StartStroke = Instance.new("UIStroke")
-    StartStroke.Thickness = 1
-    StartStroke.Color = Color3.fromRGB(0, 255, 170)
-    StartStroke.Parent = StartBtn
-    
-    -- Stop Button
-    local StopBtn = Instance.new("TextButton")
-    StopBtn.Size = UDim2.new(1, 0, 0, 30)
-    StopBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    StopBtn.BackgroundTransparency = 0.8
-    StopBtn.BorderSizePixel = 0
-    StopBtn.Text = "🛑 STOP FISHING"
-    StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    StopBtn.TextSize = 11
-    StopBtn.Font = Enum.Font.GothamBold
-    StopBtn.Parent = ExpandedContent
-    
-    local StopCorner = Instance.new("UICorner")
-    StopCorner.CornerRadius = UDim.new(0, 8)
-    StopCorner.Parent = StopBtn
-    
-    local StopStroke = Instance.new("UIStroke")
-    StopStroke.Thickness = 1
-    StopStroke.Color = Color3.fromRGB(255, 50, 50)
-    StopStroke.Parent = StopBtn
-    
-    -- Refresh Button
-    local RefreshBtn = Instance.new("TextButton")
-    RefreshBtn.Size = UDim2.new(1, 0, 0, 30)
-    RefreshBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
-    RefreshBtn.BackgroundTransparency = 0.8
-    RefreshBtn.BorderSizePixel = 0
-    RefreshBtn.Text = "🔄 REFRESH SCRIPT"
-    RefreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    RefreshBtn.TextSize = 11
-    RefreshBtn.Font = Enum.Font.GothamBold
-    RefreshBtn.Parent = ExpandedContent
-    
-    local RefreshCorner = Instance.new("UICorner")
-    RefreshCorner.CornerRadius = UDim.new(0, 8)
-    RefreshCorner.Parent = RefreshBtn
-    
-    local RefreshStroke = Instance.new("UIStroke")
-    RefreshStroke.Thickness = 1
-    RefreshStroke.Color = Color3.fromRGB(255, 255, 0)
-    RefreshStroke.Parent = RefreshBtn
-    
-    -- Stats Frame
+    -- Stats Display
     local StatsFrame = Instance.new("Frame")
-    StatsFrame.Size = UDim2.new(1, 0, 0, 50)
+    StatsFrame.Size = UDim2.new(1, 0, 0, 60)
     StatsFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
     StatsFrame.BackgroundTransparency = 0.7
     StatsFrame.BorderSizePixel = 0
@@ -425,11 +446,21 @@ local function CreateControls(gui)
     RateLabel.Size = UDim2.new(1, -10, 0, 20)
     RateLabel.Position = UDim2.new(0, 5, 0, 25)
     RateLabel.BackgroundTransparency = 1
-    RateLabel.Text = "📊 0/h"
+    RateLabel.Text = "📊 0/jam"
     RateLabel.TextColor3 = Color3.fromRGB(255, 0, 255)
     RateLabel.TextSize = 10
     RateLabel.Font = Enum.Font.Gotham
     RateLabel.Parent = StatsFrame
+    
+    local StatusLabel = Instance.new("TextLabel")
+    StatusLabel.Size = UDim2.new(1, -10, 0, 20)
+    StatusLabel.Position = UDim2.new(0, 5, 0, 45)
+    StatusLabel.BackgroundTransparency = 1
+    StatusLabel.Text = "📍 Ready for Fish It!"
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StatusLabel.TextSize = 9
+    StatusLabel.Font = Enum.Font.Gotham
+    StatusLabel.Parent = StatsFrame
     
     -- Interactions
     MinimizeBtn.MouseButton1Click:Connect(function()
@@ -437,13 +468,13 @@ local function CreateControls(gui)
         
         if gui.IsExpanded then
             TweenService:Create(gui.MainFrame, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 300, 0, 250)
+                Size = UDim2.new(0, 320, 0, 250)
             }):Play()
             ExpandedContent.Visible = true
             MinimizeBtn.Text = "-"
         else
             TweenService:Create(gui.MainFrame, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 300, 0, 60)
+                Size = UDim2.new(0, 320, 0, 60)
             }):Play()
             ExpandedContent.Visible = false
             MinimizeBtn.Text = "+"
@@ -455,10 +486,6 @@ local function CreateControls(gui)
         gui.ScreenGui:Destroy()
     end)
     
-    EquipBtn.MouseButton1Click:Connect(function()
-        FishItBot:EquipRod()
-    end)
-    
     StartBtn.MouseButton1Click:Connect(function()
         FishItBot:Start()
     end)
@@ -467,12 +494,8 @@ local function CreateControls(gui)
         FishItBot:Stop()
     end)
     
-    RefreshBtn.MouseButton1Click:Connect(function()
-        FishItBot:Stop()
-        wait(0.5)
-        gui.ScreenGui:Destroy()
-        wait(0.5)
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Main.lua"))()
+    EquipBtn.MouseButton1Click:Connect(function()
+        FishItBot:EquipRod()
     end)
     
     -- Draggable
@@ -500,28 +523,6 @@ local function CreateControls(gui)
         end
     end)
     
-    -- Hover effects
-    local function AddHoverEffect(button)
-        button.MouseEnter:Connect(function()
-            TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.6
-            }):Play()
-        end)
-        
-        button.MouseLeave:Connect(function()
-            TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.8
-            }):Play()
-        end)
-    end
-    
-    AddHoverEffect(EquipBtn)
-    AddHoverEffect(StartBtn)
-    AddHoverEffect(StopBtn)
-    AddHoverEffect(RefreshBtn)
-    AddHoverEffect(MinimizeBtn)
-    AddHoverEffect(CloseBtn)
-    
     -- Stats updater
     RunService.Heartbeat:Connect(function()
         local stats = FishItBot:GetStats()
@@ -532,37 +533,53 @@ local function CreateControls(gui)
         -- Update state color
         if string.find(stats.State, "STARTING") or string.find(stats.State, "CASTING") then
             StateLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
-        elseif string.find(stats.State, "WAITING") then
+        elseif string.find(stats.State, "WAITING") or string.find(stats.State, "MENUNGGU") then
             StateLabel.TextColor3 = Color3.fromRGB(255, 0, 255)
-        elseif string.find(stats.State, "BITE") or string.find(stats.State, "CAUGHT") then
+        elseif string.find(stats.State, "IKAN") or string.find(stats.State, "CAUGHT") then
             StateLabel.TextColor3 = Color3.fromRGB(0, 255, 170)
-        elseif string.find(stats.State, "STOP") or string.find(stats.State, "IDLE") then
+        elseif string.find(stats.State, "STOP") or string.find(stats.State, "BERHENTI") then
             StateLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         else
             StateLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
         
         TimeLabel.Text = "⏱️ " .. stats.RunningTime .. "s"
-        RateLabel.Text = "📊 " .. stats.FishPerHour .. "/h"
+        RateLabel.Text = "📊 " .. stats.FishPerHour .. "/jam"
+        
+        if FishItBot.IsFishing then
+            StatusLabel.Text = "🎣 Sedang Memancing..."
+        else
+            StatusLabel.Text = "📍 " .. stats.State
+        end
     end)
 end
 
--- Initialize
-print("⚡ SiPETUALANG210 Fishing Bot Loaded!")
-print("🎯 Ready for Fish It!")
+-- Initialize Fish It Bot
+print("==================================================================")
+print("🎣 SiPETUALANG210 FISH IT BOT")
+print("📍 Khusus untuk game: Fish It")
+print("🌐 https://www.roblox.com/games/121864768012064/Fish-It")
+print("==================================================================")
+print("🚀 FITUR:")
+print("   ✅ Auto Equip Fishing Rod")
+print("   ✅ Auto Cast & Reel")
+print("   ✅ Bite Detection System")
+print("   ✅ Real-time Statistics")
+print("==================================================================")
 
 -- Cleanup previous
-if _G.SiPETUALANG210_GUI then
-    pcall(function() _G.SiPETUALANG210_GUI:Destroy() end)
+if _G.SiPETUALANG210_FishIt_GUI then
+    pcall(function() _G.SiPETUALANG210_FishIt_GUI:Destroy() end)
 end
 
 -- Create GUI
-local gui = CreateSimpleGUI()
-_G.SiPETUALANG210_GUI = gui.ScreenGui
-CreateControls(gui)
+local gui = CreateFishItGUI()
+_G.SiPETUALANG210_FishIt_GUI = gui.ScreenGui
+CreateFishItControls(gui)
 
-print("✅ GUI Created Successfully!")
-print("📍 Click + to expand controls")
-print("📍 Use EQUIP ROD button first!")
+print("✅ GUI Berhasil Dibuat!")
+print("📍 Klik + untuk membuka controls")
+print("📍 Pastikan sudah BELI FISHING ROD di shop!")
+print("==================================================================")
 
 return FishItBot
