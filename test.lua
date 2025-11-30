@@ -1,4 +1,4 @@
--- Chloe X Fishing Bot | Version 2.1 - SIMPLE & WORKING
+-- Chloe X Fishing Bot | Version 2.2 - FIXED RELOAD ISSUE
 -- GitHub: https://github.com/username/ChloeX-Fishing-Bot
 
 local Players = game:GetService("Players")
@@ -120,8 +120,10 @@ local function CreateSimpleGUI()
         end
     end)
     
-    -- Close button
+    -- Close button - FIXED: Reset global variable
     CloseBtn.MouseButton1Click:Connect(function()
+        _G.ChloeXGUI = nil
+        _G.ChloeXLoaded = false
         ScreenGui:Destroy()
     end)
     
@@ -165,37 +167,44 @@ function FishingBot:Start()
     
     print("🎣 Fishing Bot STARTED!")
     
-    -- Main fishing loop
+    -- Main fishing loop - FIXED: Use spawn to avoid blocking
     self.Connection = RunService.Heartbeat:Connect(function()
         if not self.Enabled then return end
         
-        -- Cast
-        print("Casting...")
-        self:SendKey(Config.CastKey)
-        wait(Config.CastDuration)
-        
-        if not self.Enabled then return end
-        
-        -- Wait for bite
-        local waitTime = math.random(Config.WaitForBiteMin, Config.WaitForBiteMax)
-        print("Waiting " .. waitTime .. "s for bite...")
-        wait(waitTime)
-        
-        if not self.Enabled then return end
-        
-        -- Reel
-        print("Reeling...")
-        self:SendKey(Config.ReelKey)
-        wait(Config.ReelDuration)
-        
-        -- Success
-        self.FishCaught = self.FishCaught + 1
-        print("✅ Fish caught! Total: " .. self.FishCaught)
-        
-        -- Humanizer delay
-        if Config.Humanizer then
-            wait(math.random(5, 15) / 10)
-        end
+        spawn(function()
+            -- Cast
+            print("Casting...")
+            self:SendKey(Config.CastKey)
+            wait(Config.CastDuration)
+            
+            if not self.Enabled then return end
+            
+            -- Wait for bite
+            local waitTime = math.random(Config.WaitForBiteMin, Config.WaitForBiteMax)
+            print("Waiting " .. waitTime .. "s for bite...")
+            
+            local startWait = tick()
+            while tick() - startWait < waitTime do
+                if not self.Enabled then return end
+                wait(0.1)
+            end
+            
+            if not self.Enabled then return end
+            
+            -- Reel
+            print("Reeling...")
+            self:SendKey(Config.ReelKey)
+            wait(Config.ReelDuration)
+            
+            -- Success
+            self.FishCaught = self.FishCaught + 1
+            print("✅ Fish caught! Total: " .. self.FishCaught)
+            
+            -- Humanizer delay
+            if Config.Humanizer then
+                wait(math.random(5, 15) / 10)
+            end
+        end)
     end)
 end
 
@@ -216,7 +225,7 @@ function FishingBot:Stop()
 end
 
 function FishingBot:GetStats()
-    local runTime = tick() - self.StartTime
+    local runTime = self.StartTime > 0 and (tick() - self.StartTime) or 0
     local fph = runTime > 0 and (self.FishCaught / runTime) * 3600 or 0
     return {
         FishCaught = self.FishCaught,
@@ -499,35 +508,53 @@ local function CreateControls(gui)
         fishLabel.Text = "Fish Caught: " .. stats.FishCaught
         timeLabel.Text = "Time Running: " .. stats.RunningTime .. "s"
         rateLabel.Text = "Rate: " .. stats.FishPerHour .. " fish/hour"
+        
+        -- Update status based on fishing state
+        if FishingBot.Enabled then
+            statusLabel.Text = "Status: RUNNING"
+            statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        else
+            statusLabel.Text = "Status: STOPPED"
+            statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        end
     end)
     
-    -- Cleanup when GUI is destroyed
+    -- Cleanup when GUI is destroyed - FIXED
     gui.ScreenGui.Destroying:Connect(function()
         FishingBot:Stop()
         statsUpdater:Disconnect()
+        _G.ChloeXGUI = nil
+        _G.ChloeXLoaded = false
     end)
 end
 
 -- =====================
--- INITIALIZE
+-- INITIALIZE - FIXED RELOAD SYSTEM
 -- =====================
 print("🎣 Loading Chloe X Fishing Bot...")
 
--- Check if already loaded
-if _G.ChloeXLoaded then
-    print("⚠️ Already loaded!")
-    return
+-- Check if GUI already exists and destroy it
+if _G.ChloeXGUI then
+    pcall(function()
+        _G.ChloeXGUI:Destroy()
+        _G.ChloeXGUI = nil
+    end)
 end
 
-_G.ChloeXLoaded = true
+-- Clear any existing fishing bot
+if FishingBot.Enabled then
+    FishingBot:Stop()
+end
 
 -- Create GUI
 local success, error = pcall(function()
     local gui = CreateSimpleGUI()
+    _G.ChloeXGUI = gui.ScreenGui -- Store reference for cleanup
     CreateControls(gui)
     print("✅ Chloe X GUI Loaded Successfully!")
     print("📍 Use START FISHING button to begin")
     print("📍 Test keys with Test Cast/Reel buttons")
+    print("📍 Close with X button - can reload anytime!")
 end)
 
 if not success then
@@ -549,5 +576,17 @@ if not success then
         end
     }
 end
+
+-- Function to reload GUI
+_G.ReloadChloeX = function()
+    if _G.ChloeXGUI then
+        _G.ChloeXGUI:Destroy()
+        _G.ChloeXGUI = nil
+    end
+    _G.ChloeXLoaded = false
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/username/ChloeX-Fishing-Bot/main/ChloeX.lua"))()
+end
+
+print("🔄 Use _G.ReloadChloeX() to reload GUI anytime!")
 
 return FishingBot
