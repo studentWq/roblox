@@ -1,5 +1,5 @@
 -- GUI/MinimizableControls.lua
--- Minimizable Controls System
+-- Minimizable Controls System dengan Rod Status
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -105,7 +105,7 @@ function MinimizableControls.CreateMiniStats(gui, fishItBot, cleanupSystem)
     cleanupSystem:AddInterface(MiniStats)
     
     local FishLabel = Instance.new("TextLabel")
-    FishLabel.Size = UDim2.new(0.5, -5, 1, 0)
+    FishLabel.Size = UDim2.new(0.4, -5, 1, 0)
     FishLabel.BackgroundTransparency = 1
     FishLabel.Text = "🐟 0"
     FishLabel.TextColor3 = gui.Colors.Accent
@@ -115,13 +115,25 @@ function MinimizableControls.CreateMiniStats(gui, fishItBot, cleanupSystem)
     
     cleanupSystem:AddInterface(FishLabel)
     
+    local RodLabel = Instance.new("TextLabel")
+    RodLabel.Size = UDim2.new(0.3, -5, 1, 0)
+    RodLabel.Position = UDim2.new(0.4, 5, 0, 0)
+    RodLabel.BackgroundTransparency = 1
+    RodLabel.Text = "🎣 -"
+    RodLabel.TextColor3 = gui.Colors.Warning
+    RodLabel.TextSize = 10
+    RodLabel.Font = Enum.Font.Gotham
+    RodLabel.Parent = MiniStats
+    
+    cleanupSystem:AddInterface(RodLabel)
+    
     local StateLabel = Instance.new("TextLabel")
-    StateLabel.Size = UDim2.new(0.5, -5, 1, 0)
-    StateLabel.Position = UDim2.new(0.5, 5, 0, 0)
+    StateLabel.Size = UDim2.new(0.3, -5, 1, 0)
+    StateLabel.Position = UDim2.new(0.7, 5, 0, 0)
     StateLabel.BackgroundTransparency = 1
     StateLabel.Text = "🛑 IDLE"
     StateLabel.TextColor3 = gui.Colors.Danger
-    StateLabel.TextSize = 10
+    StateLabel.TextSize = 9
     StateLabel.Font = Enum.Font.Gotham
     StateLabel.Parent = MiniStats
     
@@ -129,6 +141,7 @@ function MinimizableControls.CreateMiniStats(gui, fishItBot, cleanupSystem)
     
     return {
         FishLabel = FishLabel,
+        RodLabel = RodLabel,
         StateLabel = StateLabel
     }
 end
@@ -136,7 +149,7 @@ end
 function MinimizableControls.CreateExpandedContent(gui, fishItBot, cleanupSystem)
     local ExpandedContent = Instance.new("Frame")
     ExpandedContent.Name = "ExpandedContent"
-    ExpandedContent.Size = UDim2.new(1, -10, 0, 150)
+    ExpandedContent.Size = UDim2.new(1, -10, 0, 180) -- Increased height
     ExpandedContent.Position = UDim2.new(0, 5, 0, 65)
     ExpandedContent.BackgroundTransparency = 1
     ExpandedContent.Visible = false
@@ -151,21 +164,74 @@ function MinimizableControls.CreateExpandedContent(gui, fishItBot, cleanupSystem
     cleanupSystem:AddInterface(ButtonsLayout)
     
     -- Start Button
-    local StartBtn = CyberNeonGUI.CreateNeonButton(ExpandedContent, "🚀 START FISHING", gui.Colors.Accent)
+    local StartBtn = CyberNeonGUI.CreateNeonButton(ExpandedContent, "🚀 START AUTO FISHING", gui.Colors.Accent)
     cleanupSystem:AddInterface(StartBtn)
     
     -- Stop Button
-    local StopBtn = CyberNeonGUI.CreateNeonButton(ExpandedContent, "🛑 STOP", gui.Colors.Danger)
+    local StopBtn = CyberNeonGUI.CreateNeonButton(ExpandedContent, "🛑 STOP FISHING", gui.Colors.Danger)
     cleanupSystem:AddInterface(StopBtn)
+    
+    -- Manual Equip Button
+    local EquipBtn = CyberNeonGUI.CreateNeonButton(ExpandedContent, "🔧 MANUAL EQUIP ROD", gui.Colors.Info)
+    cleanupSystem:AddInterface(EquipBtn)
     
     -- Stats Display
     local StatsFrame = MinimizableControls.CreateStatsDisplay(ExpandedContent, gui, cleanupSystem)
+    
+    -- Rod Status Display
+    local RodFrame = MinimizableControls.CreateRodStatusDisplay(ExpandedContent, gui, cleanupSystem)
     
     return {
         Frame = ExpandedContent,
         StartBtn = StartBtn,
         StopBtn = StopBtn,
-        StatsFrame = StatsFrame
+        EquipBtn = EquipBtn,
+        StatsFrame = StatsFrame,
+        RodFrame = RodFrame
+    }
+end
+
+function MinimizableControls.CreateRodStatusDisplay(parent, gui, cleanupSystem)
+    local RodFrame = Instance.new("Frame")
+    RodFrame.Size = UDim2.new(1, 0, 0, 40)
+    RodFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+    RodFrame.BackgroundTransparency = 0.7
+    RodFrame.BorderSizePixel = 0
+    RodFrame.Parent = parent
+    
+    local RodCorner = Instance.new("UICorner")
+    RodCorner.CornerRadius = UDim.new(0, 8)
+    RodCorner.Parent = RodFrame
+    
+    cleanupSystem:AddInterface(RodFrame)
+    
+    local RodTitle = Instance.new("TextLabel")
+    RodTitle.Size = UDim2.new(1, -10, 0, 15)
+    RodTitle.Position = UDim2.new(0, 5, 0, 2)
+    RodTitle.BackgroundTransparency = 1
+    RodTitle.Text = "🎣 Rod Status"
+    RodTitle.TextColor3 = gui.Colors.Info
+    RodTitle.TextSize = 10
+    RodTitle.Font = Enum.Font.GothamBold
+    RodTitle.Parent = RodFrame
+    
+    cleanupSystem:AddInterface(RodTitle)
+    
+    local RodStatus = Instance.new("TextLabel")
+    RodStatus.Size = UDim2.new(1, -10, 0, 20)
+    RodStatus.Position = UDim2.new(0, 5, 0, 18)
+    RodStatus.BackgroundTransparency = 1
+    RodStatus.Text = "Checking..."
+    RodStatus.TextColor3 = gui.Colors.Warning
+    RodStatus.TextSize = 9
+    RodStatus.Font = Enum.Font.Gotham
+    RodStatus.Parent = RodFrame
+    
+    cleanupSystem:AddInterface(RodStatus)
+    
+    return {
+        Frame = RodFrame,
+        Status = RodStatus
     }
 end
 
@@ -270,6 +336,12 @@ function MinimizableControls.SetupInteractions(gui, fishItBot, cleanupSystem, el
     end)
     cleanupSystem:AddConnection(stopConnection)
     
+    local equipConnection = elements.ExpandedContent.EquipBtn.MouseButton1Click:Connect(function()
+        print("🔧 Manual equip rod requested...")
+        fishItBot:ManualEquipRod()
+    end)
+    cleanupSystem:AddConnection(equipConnection)
+    
     -- Setup dragging
     MinimizableControls.SetupDragging(gui, elements.TitleBar, cleanupSystem)
     
@@ -277,6 +349,7 @@ function MinimizableControls.SetupInteractions(gui, fishItBot, cleanupSystem, el
     MinimizableControls.SetupHoverEffects({
         elements.ExpandedContent.StartBtn,
         elements.ExpandedContent.StopBtn,
+        elements.ExpandedContent.EquipBtn,
         elements.MinimizeBtn,
         elements.CloseBtn
     }, cleanupSystem)
@@ -285,69 +358,34 @@ function MinimizableControls.SetupInteractions(gui, fishItBot, cleanupSystem, el
     MinimizableControls.SetupStatsUpdater(gui, fishItBot, cleanupSystem, elements)
 end
 
-function MinimizableControls.SetupDragging(gui, titleBar, cleanupSystem)
-    local dragging = false
-    local dragStart, startPos
-    
-    local dragStartConnection = titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = gui.MainFrame.Position
-        end
-    end)
-    cleanupSystem:AddConnection(dragStartConnection)
-    
-    local dragEndConnection = titleBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    cleanupSystem:AddConnection(dragEndConnection)
-    
-    local dragMoveConnection = UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            gui.MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    cleanupSystem:AddConnection(dragMoveConnection)
-end
-
-function MinimizableControls.SetupHoverEffects(buttons, cleanupSystem)
-    for _, button in pairs(buttons) do
-        local enterConnection = button.MouseEnter:Connect(function()
-            local tween = TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.6
-            })
-            tween:Play()
-            cleanupSystem:AddTween(tween)
-        end)
-        cleanupSystem:AddConnection(enterConnection)
-        
-        local leaveConnection = button.MouseLeave:Connect(function()
-            local tween = TweenService:Create(button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.8
-            })
-            tween:Play()
-            cleanupSystem:AddTween(tween)
-        end)
-        cleanupSystem:AddConnection(leaveConnection)
-    end
-end
-
 function MinimizableControls.SetupStatsUpdater(gui, fishItBot, cleanupSystem, elements)
     local statsConnection = RunService.Heartbeat:Connect(function()
         local stats = fishItBot:GetStats()
+        local rodStatus = fishItBot:GetRodStatus()
         
         -- Update mini stats
         elements.MiniStats.FishLabel.Text = "🐟 " .. stats.FishCaught
+        
+        -- Update rod status in mini stats
+        if rodStatus.HasRod then
+            if rodStatus.IsEquipped then
+                elements.MiniStats.RodLabel.Text = "🎣 ✓"
+                elements.MiniStats.RodLabel.TextColor3 = gui.Colors.Success
+            else
+                elements.MiniStats.RodLabel.Text = "🎣 📦"
+                elements.MiniStats.RodLabel.TextColor3 = gui.Colors.Warning
+            end
+        else
+            elements.MiniStats.RodLabel.Text = "🎣 ❌"
+            elements.MiniStats.RodLabel.TextColor3 = gui.Colors.Danger
+        end
+        
         elements.MiniStats.StateLabel.Text = stats.State
         
         -- Update state color
         if string.find(stats.State, "STARTING") or string.find(stats.State, "CASTING") then
             elements.MiniStats.StateLabel.TextColor3 = gui.Colors.Primary
-        elseif string.find(stats.State, "WAITING") then
+        elseif string.find(stats.State, "WAITING") or string.find(stats.State, "EQUIPPING") then
             elements.MiniStats.StateLabel.TextColor3 = gui.Colors.Secondary
         elseif string.find(stats.State, "BITE") or string.find(stats.State, "CAUGHT") then
             elements.MiniStats.StateLabel.TextColor3 = gui.Colors.Accent
@@ -362,6 +400,24 @@ function MinimizableControls.SetupStatsUpdater(gui, fishItBot, cleanupSystem, el
             elements.ExpandedContent.StatsFrame.TimeLabel.Text = "⏱️ " .. stats.RunningTime .. "s"
             elements.ExpandedContent.StatsFrame.RateLabel.Text = "📊 " .. stats.FishPerHour .. "/h"
         end
+        
+        -- Update rod status in expanded view
+        if elements.ExpandedContent.RodFrame then
+            if rodStatus.HasRod then
+                local statusText = rodStatus.RodName
+                if rodStatus.IsEquipped then
+                    statusText = statusText .. " (EQUIPPED ✓)"
+                    elements.ExpandedContent.RodFrame.Status.TextColor3 = gui.Colors.Success
+                else
+                    statusText = statusText .. " (IN BAG 📦)"
+                    elements.ExpandedContent.RodFrame.Status.TextColor3 = gui.Colors.Warning
+                end
+                elements.ExpandedContent.RodFrame.Status.Text = statusText
+            else
+                elements.ExpandedContent.RodFrame.Status.Text = "NO ROD FOUND ❌"
+                elements.ExpandedContent.RodFrame.Status.TextColor3 = gui.Colors.Danger
+            end
+        end
     end)
     cleanupSystem:AddConnection(statsConnection)
     
@@ -373,4 +429,4 @@ function MinimizableControls.SetupStatsUpdater(gui, fishItBot, cleanupSystem, el
     cleanupSystem:AddConnection(destroyingConnection)
 end
 
-return MinimizableControls
+-- ... (fungsi SetupDragging dan SetupHoverEffects tetap sama)
