@@ -1,11 +1,11 @@
 -- GUI/CyberNeonGUI.lua
--- Cyber Neon Transparent GUI Framework
+-- Cyber Neon Transparent GUI Framework dengan Refresh Button
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
--- Load config dari GitHub
-local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Core/Config.lua"))()
+-- Load config dari GitHub dengan cache busting
+local Config = loadstring(game:HttpGet("https://raw.githubusercontent.com/studentWq/roblox/main/Core/Config.lua?v=" .. tick()))()
 
 local CyberNeonGUI = {}
 
@@ -72,6 +72,29 @@ function CyberNeonGUI.CreateNeonButton(parent, text, color)
     
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = button
+    
+    local stroke = CyberNeonGUI.AddGlowEffect(button)
+    stroke.Color = color
+    
+    return button
+end
+
+-- Function untuk create refresh button khusus
+function CyberNeonGUI.CreateRefreshButton(parent, color)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 20, 0, 20)
+    button.BackgroundColor3 = color
+    button.BackgroundTransparency = 0.7
+    button.BorderSizePixel = 0
+    button.Text = "⟳"
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 12
+    button.Font = Enum.Font.GothamBold
+    button.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = button
     
     local stroke = CyberNeonGUI.AddGlowEffect(button)
